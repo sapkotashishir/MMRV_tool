@@ -14,7 +14,7 @@ def init_ee(sa_info=None, project=None):
     if sa_info:
         creds = ee.ServiceAccountCredentials(
             sa_info["client_email"], key_data=json.dumps(sa_info))
-        ee.Initialize(creds, project=project or sa_info.get("shishirbeeville"))
+        ee.Initialize(creds, project=project or sa_info.get("project_id"))
     else:
         ee.Initialize(project=project)
 
