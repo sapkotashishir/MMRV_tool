@@ -1,2 +1,6 @@
-.venv/
+*.json
+.streamlit/service_account.json
+.streamlit/secrets.toml
 __pycache__/
+*.json
+.streamlit/
