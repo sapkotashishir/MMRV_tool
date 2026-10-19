@@ -36,7 +36,7 @@ GEE_PROJECT = "shishirbeeville"
 LOCAL_KEY_FILE = Path(
     os.environ.get(
         "GOOGLE_APPLICATION_CREDENTIALS",
-        "/home/shishir/Downloads/shishirbeeville-44ec32f81806.json",
+        "/home/shishir/Downloads/shishirbeeville-7aa95b746c94.json",
     )
 ).expanduser()
 
@@ -72,31 +72,46 @@ def read_secrets():
     except FileNotFoundError:
         return {}
 
+from google.oauth2 import service_account
 
 @st.cache_resource
 def initialize_ee():
     secrets = read_secrets()
     project = secrets.get("project", GEE_PROJECT)
 
+    scopes = [
+        "https://www.googleapis.com/auth/earthengine",
+        "https://www.googleapis.com/auth/devstorage.full_control",
+    ]
+
     if "gee" in secrets:
-        credentials = dict(secrets["gee"])
+        cred_dict = dict(secrets["gee"])
+        
+        # Ensure literal '\n' string escapes are converted to valid multiline breaks
+        if "private_key" in cred_dict:
+            cred_dict["private_key"] = cred_dict["private_key"].replace("\\n", "\n")
+
+        credentials = service_account.Credentials.from_service_account_info(
+            cred_dict, 
+            scopes=scopes
+        )
 
     elif LOCAL_KEY_FILE.is_file():
-        with LOCAL_KEY_FILE.open("r") as handle:
-            credentials = json.load(handle)
+        credentials = service_account.Credentials.from_service_account_file(
+            str(LOCAL_KEY_FILE), 
+            scopes=scopes
+        )
 
     else:
         raise FileNotFoundError(
             "No Earth Engine credentials were found. "
-            "Configure a [gee] section in Streamlit secrets, "
-            "or set GOOGLE_APPLICATION_CREDENTIALS to a "
-            "service-account JSON file outside the repository."
+            "Configure a [gee] section in Streamlit secrets."
         )
 
-    ft.init_ee(credentials, project=project)
+    # Initialize Earth Engine with the structured credentials object
+    ee.Initialize(credentials=credentials, project=project)
 
     return project
-
 
 try:
     active_project = initialize_ee()
